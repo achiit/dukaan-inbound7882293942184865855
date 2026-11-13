@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Destini 125 क्लस्टर</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#070D0C;--panel:#0F1B19;--line:#223B36;--ink:#EEF1E8;--mute:#7F9B93;--acc:#F5A623;--ok:#4FE0A0;--bad:#FF4D4F;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="light"]{--bg:#F6F6F0;--panel:#FFF;--line:#C8D0C9;--ink:#0B1A17;--mute:#4A5F59;--acc:#B26A00;--ok:#0A7A53;--bad:#C4262C;color-scheme:light}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Teko','Noto Sans Devanagari',system-ui,sans-serif;font-size:20px;line-height:1.1;-webkit-tap-highlight-color:transparent}
+main{max-width:520px;margin:0 auto;padding:10px 14px 30px}
+header{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:24px;font-weight:500;margin:0;color:var(--mute)}
+.clock{font-size:34px}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;min-height:46px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#191000;font-weight:600}
+.lights{display:flex;gap:8px;justify-content:center;margin:6px 0}
+.lt{font-size:18px;padding:3px 10px;border-radius:99px;border:1.5px solid var(--line);color:var(--mute)}
+.lt.on{color:var(--ok);border-color:var(--ok)}
+.lt.warn{color:var(--bad);border-color:var(--bad)}
+.gauge{position:relative;max-width:400px;margin:0 auto}
+.gauge svg{width:100%;display:block}
+.tick{stroke:var(--mute);stroke-width:1.2}
+.tick.m{stroke:var(--ink);stroke-width:2}
+.num{fill:var(--ink);font-family:Teko,sans-serif;font-size:11px;text-anchor:middle;dominant-baseline:middle}
+.zone{fill:none;stroke:var(--bad);stroke-width:4;opacity:.85}
+.ring{fill:none;stroke:var(--line);stroke-width:1.5}
+#needle{transform-origin:100px 100px;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.hub{fill:var(--panel);stroke:var(--acc);stroke-width:2}
+.mid{position:absolute;left:0;right:0;top:57%;text-align:center}
+.spd{font-size:clamp(84px,25vw,120px);font-weight:600;line-height:.8;font-variant-numeric:tabular-nums}
+.unit{color:var(--mute);font-size:22px}
+.side{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.cell{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px}
+.cell small{display:block;font-size:18px;color:var(--mute)}
+.cell b{font-size:36px;font-weight:500;font-variant-numeric:tabular-nums}
+.cell i{font-style:normal;font-size:17px;color:var(--mute);margin-left:3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.row{display:flex;gap:8px;margin-top:10px}.row>*{flex:1}
+.row a{text-decoration:none;display:block}.row a button{width:100%}
+#msg{margin-top:10px;font-size:20px;color:var(--mute);min-height:24px}
+#msg.err{color:var(--bad)}
+h2{font-size:28px;font-weight:500;margin:22px 0 6px}
+.fuel{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:12px}
+.f3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+label{font-size:18px;color:var(--mute);display:block}
+input{width:100%;font:inherit;font-size:24px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;min-height:44px}
+.big{font-size:40px;color:var(--ok)}
+ul{list-style:none;margin:8px 0 0;padding:0}
+li{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:6px 0;font-size:20px}
+.tl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Hero Destini 125</h1><span class="clock" id="clock">--:--</span></header>
+<div class="lights">
+  <span class="lt" id="lGps">GPS</span>
+  <span class="lt" id="lOver">ओवरस्पीड</span>
+  <span class="lt" id="lMove">चल रही</span>
+</div>
+
+<section class="gauge" aria-label="स्पीड">
+  <svg viewBox="0 0 200 200" aria-hidden="true">
+    <circle class="ring" cx="100" cy="100" r="96"/>
+    <path class="zone" id="zone"/>
+    <g id="ticks"></g>
+    <g id="needle"><polygon points="98.6,100 101.4,100 100.6,26 99.4,26" fill="#F5A623"/><circle class="hub" cx="100" cy="100" r="7"/></g>
+  </svg>
+  <div class="mid"><div class="spd" id="spd">0</div><div class="unit">किमी/घंटा</div></div>
+</section>
+
+<div class="side">
+  <div class="cell"><small>दिशा</small><b id="hd">--</b></div>
+  <div class="cell"><small>ऊँचाई</small><b id="alt">--</b><i>मी</i></div>
+  <div class="cell"><small>ओडोमीटर</small><b id="odo">0</b><i>किमी</i></div>
+</div>
+<div class="g2">
+  <div class="cell"><small>ट्रिप</small><b id="dist">0.0</b><i>किमी</i></div>
+  <div class="cell"><small>समय</small><b id="time">00:00</b></div>
+  <div class="cell"><small>औसत</small><b id="avg">0</b><i>किमी/घं</i></div>
+  <div class="cell"><small>टॉप</small><b id="max">0</b><i>किमी/घं</i></div>
+</div>
+
+<div class="row">
+  <button class="pri" id="gpsBtn">लोकेशन चालू करें</button>
+  <button id="reset">ट्रिप रीसेट</button>
+</div>
+<div class="row">
+  <a href="https://www.google.com/maps" target="_blank" rel="noopener"><button>नेविगेशन</button></a>
+  <button id="full">पूरी स्क्रीन</button>
+  <button id="theme">धूप मोड</button>
+</div>
+<div id="msg"></div>
+
+<h2>राइड टूल्स</h2>
+<section class="fuel"><div class="tl">
+<button id="park">गाड़ी की जगह सेव</button>
+<button id="findp">गाड़ी कहाँ है?</button>
+<button id="share">लाइव लोकेशन शेयर</button>
+<button id="sos" style="border-color:var(--bad);color:var(--bad)">SOS मदद</button>
+<button id="saveTrip">ट्रिप सेव करें</button>
+<button id="voice">आवाज़ अलर्ट: बंद</button>
+</div></section>
+<h2>सेटिंग और रिमाइंडर</h2>
+<section class="fuel">
+<div class="f3"><div><label for="lim">स्पीड लिमिट</label><input id="lim" type="number" inputmode="numeric"></div><div><label for="ph">SOS नंबर</label><input id="ph" type="tel" inputmode="tel" placeholder="91..."></div><div><label for="odoIn">ओडोमीटर</label><input id="odoIn" type="number" inputmode="numeric"></div></div>
+<div class="f3"><div><label for="svNext">सर्विस किमी पर</label><input id="svNext" type="number" inputmode="numeric"></div><div><label for="tankIn">टंकी (लीटर)</label><input id="tankIn" type="number" inputmode="decimal" step="0.1"></div><div></div></div>
+<button class="pri" id="setTools" style="width:100%">सेटिंग सेव करें</button>
+<div style="color:var(--mute);margin-top:8px">अगली सर्विस</div><div class="big" id="svLeft">--</div>
+<div style="color:var(--mute)">अनुमानित रेंज</div><div class="big" id="rng">--</div>
+</section>
+<h2>ट्रिप हिस्ट्री</h2>
+<section class="fuel"><ul id="hist"></ul></section>
+<h2>पेट्रोल और माइलेज</h2>
+<section class="fuel">
+  <div class="f3">
+    <div><label for="fl">लीटर</label><input id="fl" type="number" inputmode="decimal" step="0.01"></div>
+    <div><label for="fr">रुपये</label><input id="fr" type="number" inputmode="decimal"></div>
+    <div><label for="fk">किमी चले</label><input id="fk" type="number" inputmode="decimal" step="0.1"></div>
+  </div>
+  <button class="pri" id="save" style="width:100%">एंट्री सेव करें</button>
+  <div style="color:var(--mute);margin-top:8px">औसत माइलेज</div>
+  <div class="big" id="mil">-- किमी/लीटर</div>
+  <ul id="log"></ul>
+</section>
+</main>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},NS='http://www.w3.org/2000/svg';
+var MAXV=100,LIMIT=60,SW=120;
+function pt(a,r){var t=a*Math.PI/180;return[100+r*Math.sin(t),100-r*Math.cos(t)]}
+function ang(v){return -SW+v/MAXV*2*SW}
+(function build(){
+  var g=$('ticks');
+  for(var v=0;v<=MAXV;v+=5){
+    var major=v%10===0,a=ang(v),p1=pt(a,major?78:83),p2=pt(a,90);
+    var l=document.createElementNS(NS,'line');
+    l.setAttribute('x1',p1[0]);l.setAttribute('y1',p1[1]);l.setAttribute('x2',p2[0]);l.setAttribute('y2',p2[1]);
+    l.setAttribute('class','tick'+(major?' m':''));g.appendChild(l);
+    if(major){var q=pt(a,66),t=document.createElementNS(NS,'text');
+      t.setAttribute('x',q[0]);t.setAttribute('y',q[1]);t.setAttribute('class','num');t.textContent=v;g.appendChild(t)}
+  }
+  window.setZone=function(){var s=pt(ang(LIMIT),93),e=pt(ang(MAXV),93);
+  $('zone').setAttribute('d','M'+s[0]+' '+s[1]+' A93 93 0 0 1 '+e[0]+' '+e[1])};window.setZone();
+})();
+
+var st={dist:0,move:0,max:0,last:null,speed:0,disp:0,run:false};
+var odo=0,wid=null,tick=null,wake=null;
+try{odo=parseFloat(localStorage.getItem('dc_odo')||'0')||0}catch(e){}
+function pad(n){return n<10?'0'+n:''+n}
+function fmt(s){s=Math.floor(s);var h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+':'+pad(m):pad(m)+':'+pad(s%60)}
+function hav(a,b){var R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;
+  var x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)*Math.sin(dn/2);
+  return 2*R*Math.asin(Math.sqrt(x))}
+var DIRS=['उ','उ-पू','पू','द-पू','द','द-प','प','उ-प'];
+function render(){
+  var s=Math.round(st.disp);
+  $('spd').textContent=s;
+  $('needle').style.transform='rotate('+ang(Math.min(st.disp,MAXV))+'deg)';
+  $('lOver').classList.toggle('warn',s>LIMIT);alertOver(s);
+  $('lMove').classList.toggle('on',s>=2);
+  $('dist').textContent=(st.dist/1000).toFixed(1);
+  $('time').textContent=fmt(st.move);
+  $('avg').textContent=st.move>5?Math.round(st.dist/st.move*3.6):0;
+  $('max').textContent=Math.round(st.max);
+  $('odo').textContent=Math.round(odo/1000);
+}
+function msg(t,err){var m=$('msg');m.textContent=t;m.className=err?'err':''}
+function onPos(p){
+  var c=p.coords,now=p.timestamp,acc=c.accuracy;
+  $('lGps').classList.add('on');$('lGps').textContent='GPS '+Math.round(acc)+'मी';
+  msg('');
+  var v=(c.speed!=null&&c.speed>=0)?c.speed*3.6:null,pt0={lat:c.latitude,lon:c.longitude,t:now};
+  if(v==null&&st.last){var dt=(now-st.last.t)/1000;if(dt>0)v=hav(st.last,pt0)/dt*3.6}
+  if(v==null||v<2)v=0;
+  st.speed=v;st.disp=st.disp*0.4+v*0.6;if(v===0)st.disp=0;
+  if(v>st.max)st.max=v;
+  if(st.last&&acc<40&&v>=2){var d=hav(st.last,pt0);if(d<200){st.dist+=d;odo+=d;try{localStorage.setItem('dc_odo',odo)}catch(e){}}}
+  st.last=pt0;
+  $('alt').textContent=c.altitude!=null?Math.round(c.altitude):'--';
+  $('hd').textContent=(c.heading!=null&&!isNaN(c.heading)&&v>=2)?DIRS[Math.round(c.heading/45)%8]:'--';
+  render();
+}
+function onErr(e){
+  $('lGps').classList.remove('on');$('lGps').textContent='GPS';
+  if(e.code===1){msg('लोकेशन ब्लॉक है। ब्राउज़र के एड्रेस बार में लॉक/सेटिंग आइकन दबाकर Location को Allow करें, फिर पेज रीफ़्रेश करें। न चले तो लिंक को Chrome में अलग टैब में खोलें।',true)}
+  else if(e.code===2){msg('GPS सिग्नल नहीं मिल रहा। फ़ोन की Location (GPS) ON करें और खुले में आएँ।',true)}
+  else{msg('GPS में देर लग रही है। थोड़ा रुकें...',true)}
+}
+async function keepAwake(){try{if(navigator.wakeLock)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+function start(){
+  if(!navigator.geolocation){msg('इस ब्राउज़र में GPS सपोर्ट नहीं है।',true);return}
+  if(wid!=null)return;
+  st.run=true;st.last=null;
+  wid=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+  tick=setInterval(function(){if(st.speed>=2){st.move+=1;render()}},1000);
+  keepAwake();$('gpsBtn').textContent='लोकेशन चालू ✓';
+}
+$('gpsBtn').onclick=function(){if(wid!=null){navigator.geolocation.clearWatch(wid);wid=null;clearInterval(tick);st.speed=st.disp=0;$('lGps').classList.remove('on');$('gpsBtn').textContent='लोकेशन चालू करें';render()}else start()};
+$('reset').onclick=function(){st.dist=0;st.move=0;st.max=0;render()};
+$('full').onclick=function(){try{var d=document.documentElement;if(document.fullscreenElement)document.exitFullscreen();else d.requestFullscreen()}catch(e){msg('इस फ़ोन में पूरी स्क्रीन सपोर्ट नहीं है।',true)}};
+document.addEventListener('visibilitychange',function(){if(wid!=null&&document.visibilityState==='visible')keepAwake()});
+function clock(){var d=new Date();$('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())}
+clock();setInterval(clock,15000);
+
+$('theme').onclick=function(){var r=document.documentElement,l=r.getAttribute('data-theme')==='light';
+  r.setAttribute('data-theme',l?'dark':'light');$('theme').textContent=l?'धूप मोड':'रात मोड';
+  try{localStorage.setItem('dc_theme',l?'dark':'light')}catch(e){}};
+try{if(localStorage.getItem('dc_theme')==='light'){document.documentElement.setAttribute('data-theme','light');$('theme').textContent='रात मोड'}}catch(e){}
+
+var logs=[];try{logs=JSON.parse(localStorage.getItem('dc_fuel')||'[]')}catch(e){}
+function drawLog(){var L=0,K=0,h='';logs.forEach(function(x){L+=x.l;K+=x.k});
+  $('mil').textContent=L>0&&K>0?(K/L).toFixed(1)+' किमी/लीटर':'-- किमी/लीटर';
+  logs.slice(-5).reverse().forEach(function(x){h+='<li><span>'+x.d+'</span><span>'+x.l+' ली · ₹'+x.r+' · '+(x.k/x.l).toFixed(1)+' किमी/ली</span></li>'});
+  $('log').innerHTML=h}
+$('save').onclick=function(){var l=parseFloat($('fl').value),r=parseFloat($('fr').value)||0,k=parseFloat($('fk').value);
+  if(!(l>0)||!(k>0)){msg('लीटर और किमी दोनों भरें।',true);return}
+  var d=new Date();logs.push({l:l,r:r,k:k,d:d.getDate()+'/'+(d.getMonth()+1)});
+  try{localStorage.setItem('dc_fuel',JSON.stringify(logs))}catch(e){}
+  $('fl').value=$('fr').value=$('fk').value='';drawLog();msg('एंट्री सेव हो गई।')};
+var sets={lim:60,ph:'',sv:0,tank:0,voice:false},hist=[],lastSay=0;
+try{Object.assign(sets,JSON.parse(localStorage.getItem('dc_set')||'{}'));hist=JSON.parse(localStorage.getItem('dc_hist')||'[]')}catch(e){}
+LIMIT=sets.lim;window.setZone();
+function sv(){try{localStorage.setItem('dc_set',JSON.stringify(sets))}catch(e){}}
+function say(t){if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(t);u.lang='hi-IN';speechSynthesis.speak(u)}}
+function alertOver(s){if(sets.voice&&s>LIMIT&&Date.now()-lastSay>15000){lastSay=Date.now();say('स्पीड कम करें')}}
+function drawHist(){var h='';hist.slice(-8).reverse().forEach(function(x){h+='<li><span>'+x.d+'</span><span>'+x.k+' किमी · '+x.t+' · औसत '+x.a+'</span></li>'});$('hist').innerHTML=h||'<li>अभी कोई ट्रिप सेव नहीं है</li>'}
+function tools(){var left=sets.sv>0?Math.round(sets.sv-odo/1000):null,e=$('svLeft'),L=0,K=0;
+ e.textContent=left==null?'-- किमी बाकी':(left>0?left+' किमी बाकी':'सर्विस का समय!');e.style.color=(left!=null&&left<=100)?'var(--bad)':'var(--ok)';
+ logs.forEach(function(x){L+=x.l;K+=x.k});$('rng').textContent=(sets.tank>0&&L>0)?Math.round(sets.tank*K/L)+' किमी':'--'}
+function pos(){if(!st.last){msg('पहले GPS चालू होने दें।',true);return null}return st.last}
+function ll(p){return p.lat.toFixed(6)+','+p.lon.toFixed(6)}
+$('park').onclick=function(){var p=pos();if(!p)return;try{localStorage.setItem('dc_park',JSON.stringify(p))}catch(e){}msg('गाड़ी की जगह सेव हो गई।')};
+$('findp').onclick=function(){var p=null;try{p=JSON.parse(localStorage.getItem('dc_park'))}catch(e){}if(!p){msg('पहले गाड़ी की जगह सेव करें।',true);return}window.open('https://www.google.com/maps/dir/?api=1&travelmode=walking&destination='+ll(p),'_blank')};
+$('share').onclick=function(){var p=pos();if(!p)return;window.open('https://wa.me/?text='+encodeURIComponent('मेरी लाइव लोकेशन: https://maps.google.com/?q='+ll(p)),'_blank')};
+$('sos').onclick=function(){var p=pos();if(!p)return;window.open('https://wa.me/'+(sets.ph||'').replace(/\D/g,'')+'?text='+encodeURIComponent('मदद चाहिए! मेरी लोकेशन: https://maps.google.com/?q='+ll(p)),'_blank')};
+$('saveTrip').onclick=function(){if(st.dist<100){msg('सेव करने लायक ट्रिप नहीं है।',true);return}var d=new Date();hist.push({d:d.getDate()+'/'+(d.getMonth()+1),k:(st.dist/1000).toFixed(1),t:fmt(st.move),a:(st.move>5?Math.round(st.dist/st.move*3.6):0)+' किमी/घं'});try{localStorage.setItem('dc_hist',JSON.stringify(hist.slice(-30)))}catch(e){}st.dist=0;st.move=0;st.max=0;render();drawHist();msg('ट्रिप सेव हो गई।')};
+function vtxt(){$('voice').textContent='आवाज़ अलर्ट: '+(sets.voice?'चालू':'बंद')}
+$('voice').onclick=function(){sets.voice=!sets.voice;sv();vtxt();if(sets.voice)say('आवाज़ अलर्ट चालू')};
+$('lim').value=sets.lim;$('ph').value=sets.ph;$('svNext').value=sets.sv||'';$('tankIn').value=sets.tank||'';
+$('setTools').onclick=function(){var l=parseFloat($('lim').value);if(l>=20&&l<=MAXV){sets.lim=l;LIMIT=l;window.setZone()}sets.ph=$('ph').value;sets.sv=parseFloat($('svNext').value)||0;sets.tank=parseFloat($('tankIn').value)||0;var o=parseFloat($('odoIn').value);if(o>=0){odo=o*1000;try{localStorage.setItem('dc_odo',odo)}catch(e){}$('odoIn').value=''}sv();render();tools();msg('सेटिंग सेव हो गई।')};
+vtxt();drawHist();tools();setInterval(tools,3000);
+drawLog();render();
+start();
+})();
+</script>
+</body>
+</html>
